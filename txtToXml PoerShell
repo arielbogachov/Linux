@@ -9,7 +9,7 @@ $xmlString += "<Data>"
 
 foreach ($line in $textData) {
     $arguments = $line -split "\|"
-
+#the argumets is for example but you can chage as your choise ,also the count of columns
     if ($arguments.Count -eq 6) {
         $xmlString += "<Person>"
         $xmlString += "<Name>$($arguments[0])</Name>"
