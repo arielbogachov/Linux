@@ -1,0 +1,60 @@
+##The code is for automate the moltiplate of playbooks and only chose 1 for diff versions - it also join the hosts file and change for your choise the object that you want
+
+#!/bin/bash
+
+#soft links for host - its changing for your opnion
+
+pattern="\[sanity\]"
+file="/etc/ansible/hosts"
+ 
+#take the answer and search it the file
+
+read -p "Enter the object: " ves
+
+output=$(grep -m 1 "$ves" "$file")
+
+#checks if it is exist in file
+
+if [ -n "$output" ]; then
+    echo "$output"
+
+#make sure that response is ok 
+
+    read -p "Is this your object? (yes/YES): " ans
+
+    if [ "$ans" = "yes" ] || [ "$ans" = "YES" ]; then
+
+#change it in the file
+
+            sudo sed -i "/${pattern}/ { 
+            n; s/.*/$output/
+        }" "$file" && \
+      echo "####################################################################################################################" && echo "object confirmed." && \
+      
+#eneter a choise of playbook
+
+        echo "choose the playbook:" && \
+        echo "1) <your_playbook1>.yml" && \
+        echo "2) <your_playbook2>.yml" && \
+        read -p "Enter your choice (1/2): " option && \
+
+#check the choise and run the playbook
+
+        if [ "$option" == 1 ]; then
+            ansible-playbook <your_playbook1>.yml -f 50 -T 20
+	    exit 0
+        elif [ "$option" == 2 ]; then
+            ansible-playbook <your_playbook2>.yml -f 50 -T 20
+	    exit 0
+
+        else
+            echo "Invalid option. Exiting."
+            exit 1
+        fi
+	
+    else
+        echo "NO SUCH OBJECT"
+    fi
+else
+    echo "Object not found."
+fi
