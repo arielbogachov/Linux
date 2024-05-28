@@ -5,7 +5,7 @@ LOG_FILE="/var/tmp/post_reboot.log"
 STATE_FILE="/var/tmp/reboot.txt"
 SCRIPT1="/var/tmp/post-reboot.sh"
 SCRIPT2="/var/tmp/pre-reboot.sh"
-password="Orca123"
+password="<password>"
 REMOVE="/var/tmp/removetemp.sh"
 
 sleep 60
