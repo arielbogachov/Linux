@@ -31,7 +31,7 @@ sudo touch "$STATE_FILE" || { echo "Failed to create state file"; exit 1; }
 echo "$num" | sudo tee "$NUM_FILE" >/dev/null || { echo "Failed to create hostname number file"; exit 1; }
 
 user="temp"
-pass="Orca123"
+pass="<password>"
 orcaghost="orca-ghost"
 
 # Check if user already exists
