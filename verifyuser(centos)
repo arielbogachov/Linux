@@ -1,0 +1,91 @@
+#!Bin/Bash
+
+ ## For Centos ##
+## check the user if exist
+echo "####################################"
+read -p 'Enter your user :' usr
+echo
+echo "HI . $usr wait one min "
+echo
+echo "Check if your accout in the repository"
+sleep 1
+dir=$(cut -d: -f1 /etc/passwd | grep $usr) > /dev/null
+
+
+if [ "$usr" != "$dir" ] ## check if he in the file of users
+then
+
+        ## insert the username and password
+
+        read -sp 'PASSWord :' pass
+        echo
+        read -sp 'Comfrim password :' pas
+        echo
+        echo "####################################"
+        echo
+
+        while [  "$pas" != "$pass" ] ##loop checking
+        do
+
+                echo "#################################################"
+                read -sp ' the password didnt match do it again : ' pas
+                echo
+        done
+
+        ##print
+        useradd $usr
+        echo " $usr" >> /etc/passwords.txt
+        usermod -adG Basic $usr > /dev/null 2>> /etc/passwords.txt
+        echo " : $pass" >> /etc/passwords.txt
+        echo "$usr:$pass" | chpasswd
+
+        echo
+        echo "############################################"
+        echo "Hello $usr add welcome to the vm!"
+        echo "############################################"
+
+else
+        ##if the user exist ask if reset
+
+        echo
+        echo "You have already account"
+        echo
+        read -p 'You want to reset password ? (y/n) ' newpass
+
+        if [ $newpass == "y" ]
+        then
+     read -sp 'PASSWord :' pass
+                echo
+                read -sp 'Comfrim password :' pas
+                echo
+                echo "####################################"
+                echo
+
+
+                while [  "$pas" != "$pass" ] ## same as the first while
+                do
+
+
+                        echo
+                        echo "############################################"
+                        echo
+                        read -sp 'didnt match , renter the password: ' pas
+
+
+                done
+
+        else
+                echo
+                echo "##############################"
+                echo "welcome back! Enjoy $usr !"
+                echo "##############################"
+
+        fi
+        echo
+
+        echo
+        echo "############################################"
+        echo "Hello $usr add welcome to the vm!"
+        echo "############################################"
+
+fi
