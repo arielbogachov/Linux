@@ -32,7 +32,7 @@ echo "$num" | sudo tee "$NUM_FILE" >/dev/null || { echo "Failed to create hostna
 
 user="temp"
 pass="<password>"
-orcaghost="orca-ghost"
+username="<username>"
 
 # Check if user already exists
 if id "$user" &>/dev/null; then
