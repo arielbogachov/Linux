@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kontrolix — Docker + Kubernetes Pipelines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rail-brand">
+      <span class="rail-brand-mark">▣</span>
+      <span class="rail-brand-name">Kontrolix</span>
+    </div>
+    <nav class="rail-nav">
+      <button class="rail-link active" data-view="jobs">Jobs</button>
+      <button class="rail-link" data-view="runs">Runs</button>
+      <button class="rail-link" data-view="new-job">New job</button>
+      <button class="rail-link" data-view="optimize">⚡ Optimize</button>
+    </nav>
+    <div class="rail-foot">
+      <span class="dot dot-idle"></span> server: <span id="server-status">checking…</span>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- JOBS LIST -->
+    <section id="view-jobs" class="view">
+      <header class="view-head">
+        <h1>Jobs</h1>
+        <button class="btn btn-primary" data-goto="new-job">+ New job</button>
+      </header>
+      <div id="jobs-list" class="stack"></div>
+    </section>
+
+    <!-- NEW / EDIT JOB -->
+    <section id="view-new-job" class="view" hidden>
+      <header class="view-head">
+        <h1>New pipeline</h1>
+      </header>
+
+      <form id="job-form" class="panel form">
+        <label class="field">
+          <span>Job name</span>
+          <input type="text" name="name" placeholder="build-and-deploy-api" required />
+        </label>
+
+        <label class="field">
+          <span>Description</span>
+          <input type="text" name="description" placeholder="Builds the API image and deploys it to staging" />
+        </label>
+
+        <label class="field">
+          <span>Trigger</span>
+          <select name="trigger_type" id="trigger-type">
+            <option value="manual">Manual — run on demand</option>
+            <option value="cron">Scheduled — cron expression</option>
+            <option value="webhook">Webhook — HTTP POST (e.g. git push)</option>
+          </select>
+        </label>
+
+        <label class="field" id="cron-field" hidden>
+          <span>Cron schedule</span>
+          <input type="text" name="cron_schedule" placeholder="*/15 * * * *" />
+        </label>
+
+        <label class="field" id="webhook-field" hidden>
+          <span>Webhook secret (optional)</span>
+          <input type="text" name="webhook_secret" placeholder="leave blank for no secret" />
+        </label>
+
+        <div class="field">
+          <span>Pipeline steps</span>
+          <div id="steps-list" class="steps-list"></div>
+          <div class="steps-add">
+            <select id="step-type-select">
+              <option value="dockerBuild">Docker: build image</option>
+              <option value="dockerPush">Docker: push image</option>
+              <option value="composeConvert">Convert: Compose → Kubernetes</option>
+              <option value="k8sDeploy">Kubernetes: deploy manifests</option>
+              <option value="optimize">Optimize: harden K8s/Compose/Dockerfile</option>
+              <option value="shell">Shell: run command</option>
+            </select>
+            <button type="button" class="btn btn-ghost" id="add-step-btn">+ Add step</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create job</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- JOB DETAIL -->
+    <section id="view-job-detail" class="view" hidden>
+      <header class="view-head">
+        <h1 id="job-detail-name">—</h1>
+        <div class="view-head-actions">
+          <button class="btn btn-primary" id="run-job-btn">▶ Run now</button>
+          <button class="btn btn-danger" id="delete-job-btn">Delete</button>
+        </div>
+      </header>
+      <p id="job-detail-desc" class="muted"></p>
+
+      <div class="panel">
+        <h3 class="panel-title">Pipeline</h3>
+        <div id="job-detail-steps" class="chain"></div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Recent runs</h3>
+        <div id="job-detail-runs" class="stack"></div>
+      </div>
+    </section>
+
+    <!-- ALL RUNS -->
+    <section id="view-runs" class="view" hidden>
+      <header class="view-head">
+        <h1>Runs</h1>
+      </header>
+      <div id="runs-list" class="stack"></div>
+    </section>
+
+    <!-- OPTIMIZE -->
+    <section id="view-optimize" class="view" hidden>
+      <header class="view-head">
+        <h1>Optimize</h1>
+      </header>
+      <p class="muted">Paste a Kubernetes manifest, a docker-compose.yml, or a Dockerfile. One click adds resource limits, health checks, and security hardening — you'll see a diff before anything is applied.</p>
+
+      <div class="panel form">
+        <label class="field">
+          <span>File type</span>
+          <select id="optimize-type">
+            <option value="k8s">Kubernetes Pod / Deployment YAML</option>
+            <option value="compose">docker-compose.yml</option>
+            <option value="dockerfile">Dockerfile</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Paste file contents (or drop a file)</span>
+          <textarea id="optimize-input" class="code-input" rows="14" spellcheck="false" placeholder="paste your YAML or Dockerfile here…"></textarea>
+        </label>
+        <input type="file" id="optimize-file-input" accept=".yaml,.yml,.dockerfile,Dockerfile,*" hidden />
+
+        <div class="form-actions" style="justify-content: space-between;">
+          <button type="button" class="btn btn-ghost" id="optimize-upload-btn">Upload a file instead</button>
+          <button type="button" class="btn btn-primary" id="optimize-run-btn">⚡ Optimize (one click)</button>
+        </div>
+      </div>
+
+      <div id="optimize-results" hidden>
+        <div class="panel">
+          <h3 class="panel-title">What changed</h3>
+          <ul id="optimize-changes" class="change-list"></ul>
+          <ul id="optimize-suggestions" class="change-list change-list-suggestion"></ul>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-title">Diff preview</h3>
+          <pre id="optimize-diff" class="terminal diff-view"></pre>
+        </div>
+
+        <div class="form-actions" style="justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-ghost" id="optimize-download-btn">Download optimized file</button>
+          <button type="button" class="btn btn-primary" id="optimize-apply-btn">Apply on server</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RUN LOGS -->
+    <section id="view-run-logs" class="view" hidden>
+      <header class="view-head">
+        <h1>Run <span id="run-log-id" class="mono muted"></span></h1>
+        <span id="run-log-status" class="badge">—</span>
+      </header>
+      <pre id="run-log-output" class="terminal"></pre>
+    </section>
+
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

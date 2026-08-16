@@ -1,0 +1,12 @@
+{
+  "name": "build-and-deploy-web",
+  "description": "Build the web app image, convert its Compose file, and deploy to the staging namespace",
+  "trigger_type": "webhook",
+  "trigger_config": { "secret": "change-me" },
+  "steps": [
+    { "type": "dockerBuild", "context": ".", "dockerfile": "Dockerfile", "tag": "myapp/web:latest" },
+    { "type": "dockerPush", "tag": "myapp/web:latest" },
+    { "type": "composeConvert", "composeFile": "docker-compose.yml", "outputDir": "./k8s" },
+    { "type": "k8sDeploy", "namespace": "staging" }
+  ]
+}
