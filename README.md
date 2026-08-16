@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Install the APP: 
 npm install && npm start
 
