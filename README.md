@@ -1,3 +1,4 @@
+Install the APP:
 unzip dokube-ci.zip && cd dokerbuild
 npm install
 npm start
@@ -9,6 +10,7 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 CLI commands:
+
 npm link
 dokube create examples/build-deploy.json
 dokube list
