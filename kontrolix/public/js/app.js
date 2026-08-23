@@ -69,6 +69,7 @@ async function renderJobsList() {
 async function openJobDetail(jobId) {
   const job = await api(`/jobs/${jobId}`);
   const runs = await api(`/jobs/${jobId}/runs`);
+  renderInsights(jobId);
 
   document.getElementById('job-detail-name').textContent = job.name;
   document.getElementById('job-detail-desc').textContent = job.description || '';
@@ -98,6 +99,37 @@ async function openJobDetail(jobId) {
   };
 
   showView('job-detail');
+}
+
+async function renderInsights(jobId) {
+  const panel = document.getElementById('job-detail-insights');
+  const body = document.getElementById('job-detail-insights-body');
+  try {
+    const insights = await api(`/insights/${jobId}`);
+    if (insights.sampleCount === 0) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+
+    const r = insights.recommendedResources;
+    let html = `<div class="insight-row">
+      <div class="insight-stat"><span class="insight-stat-label">Samples</span><span class="insight-stat-value">${insights.sampleCount} dev-check run(s)</span></div>
+      <div class="insight-stat"><span class="insight-stat-label">Recommended requests</span><span class="insight-stat-value mono">${r.requests.cpu} / ${r.requests.memory}</span></div>
+      <div class="insight-stat"><span class="insight-stat-label">Recommended limits</span><span class="insight-stat-value mono">${r.limits.cpu} / ${r.limits.memory}</span></div>
+      <div class="insight-stat"><span class="insight-stat-label">Sizing basis</span><span class="insight-stat-value">${insights.basedOnHistory ? 'real usage ✓' : 'static default'}</span></div>
+    </div>`;
+
+    if (insights.recurringFailures.length) {
+      html += `<div style="margin-top:8px;">${insights.recurringFailures.map((f) => `
+        <div class="failure-pattern"><span class="failure-pattern-count">${f.count}×</span>${escapeHtml(f.signature)} <span class="muted">(last seen ${f.lastSeen})</span></div>
+      `).join('')}</div>`;
+    }
+
+    body.innerHTML = html;
+  } catch {
+    panel.hidden = true;
+  }
 }
 
 function runRowHtml(r) {
@@ -178,6 +210,7 @@ function labelForStepType(type) {
     composeConvert: 'Compose → K8s',
     k8sDeploy: 'K8s Deploy',
     optimize: 'Optimize',
+    devCheck: 'Dev Check',
     shell: 'Shell',
   }[type] || type;
 }
@@ -189,6 +222,7 @@ function stepSummary(step) {
     case 'composeConvert': return `${step.composeFile || 'docker-compose.yml'} → ${step.outputDir || './k8s'}`;
     case 'k8sDeploy': return `ns=${step.namespace || 'default'} ${step.manifestDir || step.manifestPath || '(from convert step)'}`;
     case 'optimize': return `${step.target || '?'} ${step.inputPath || ''} → ${step.outputPath || '(auto)'}`;
+    case 'devCheck': return `image=${step.image || '(from build step)'} port=${step.port || '-'} timeout=${step.startupTimeoutSeconds || 15}s`;
     case 'shell': return step.command || '';
     default: return '';
   }
@@ -201,6 +235,7 @@ function defaultFieldsForStepType(type) {
     case 'composeConvert': return [['composeFile', 'docker-compose.yml'], ['outputDir', './k8s']];
     case 'k8sDeploy': return [['namespace', 'default'], ['manifestDir', './k8s']];
     case 'optimize': return [['target', 'k8s'], ['inputPath', './k8s/web-deployment.yaml'], ['outputPath', './k8s-optimized/web-deployment.yaml']];
+    case 'devCheck': return [['port', '3000'], ['healthPath', '/'], ['startupTimeoutSeconds', '15']];
     case 'shell': return [['command', 'echo hello']];
     default: return [];
   }
@@ -281,11 +316,26 @@ function initNewJobForm() {
 // ---------- Optimize ----------
 let lastOptimizeResult = null;
 
+async function populateOptimizeHistoryDropdown() {
+  const select = document.getElementById('optimize-history-job');
+  try {
+    const jobs = await api('/jobs');
+    select.innerHTML = '<option value="">— static defaults —</option>' +
+      jobs.map((j) => `<option value="${j.id}">${escapeHtml(j.name)}</option>`).join('');
+  } catch { /* leave the default option only */ }
+}
+
 function initOptimizeView() {
   const uploadBtn = document.getElementById('optimize-upload-btn');
   const fileInput = document.getElementById('optimize-file-input');
   const input = document.getElementById('optimize-input');
   const typeSelect = document.getElementById('optimize-type');
+  const historyField = document.getElementById('optimize-history-field');
+
+  const toggleHistoryField = () => { historyField.hidden = !(typeSelect.value === 'k8s' || typeSelect.value === 'compose'); };
+  typeSelect.addEventListener('change', toggleHistoryField);
+  toggleHistoryField();
+  populateOptimizeHistoryDropdown();
 
   uploadBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', async () => {
@@ -301,14 +351,15 @@ function initOptimizeView() {
   document.getElementById('optimize-run-btn').addEventListener('click', async () => {
     const type = typeSelect.value;
     const content = input.value.trim();
+    const jobId = document.getElementById('optimize-history-job').value || undefined;
     if (!content) { alert('Paste or upload a file first.'); return; }
 
     const btn = document.getElementById('optimize-run-btn');
     btn.disabled = true;
     btn.textContent = 'Optimizing…';
     try {
-      const result = await api('/optimize', { method: 'POST', body: JSON.stringify({ type, content }) });
-      lastOptimizeResult = result;
+      const result = await api('/optimize', { method: 'POST', body: JSON.stringify({ type, content, jobId }) });
+      lastOptimizeResult = { ...result, jobId };
       renderOptimizeResults(result);
     } catch (err) {
       alert(`Optimize failed: ${err.message}`);
@@ -341,6 +392,7 @@ function initOptimizeView() {
           type: lastOptimizeResult.type,
           content: lastOptimizeResult.original,
           filename: `optimized-${lastOptimizeResult.type}${lastOptimizeResult.type === 'dockerfile' ? '' : '.yaml'}`,
+          jobId: lastOptimizeResult.jobId,
         }),
       });
       alert(`Applied — written to ${res.path} on the server.`);
@@ -353,17 +405,64 @@ function initOptimizeView() {
   });
 }
 
+const CATEGORY_META = {
+  security: { icon: '🔒', label: 'Security' },
+  performance: { icon: '⚡', label: 'Performance' },
+  reliability: { icon: '🩺', label: 'Reliability' },
+  storage: { icon: '🗄', label: 'Storage' },
+  general: { icon: 'ℹ️', label: 'General' },
+};
+
+function groupByCategory(entries) {
+  const groups = {};
+  entries.forEach((e) => {
+    const cat = e.category || 'general';
+    groups[cat] = groups[cat] || [];
+    groups[cat].push(e.message || e);
+  });
+  return groups;
+}
+
+function renderGroupedList(entries, variant) {
+  const groups = groupByCategory(entries);
+  const order = ['security', 'reliability', 'storage', 'performance', 'general'];
+  const listClass = variant === 'suggestion' ? 'change-list change-list-suggestion' : 'change-list';
+  return order
+    .filter((cat) => groups[cat]?.length)
+    .map((cat) => {
+      const meta = CATEGORY_META[cat];
+      return `
+        <div class="category-group">
+          <div class="category-group-head">${meta.icon} ${meta.label} <span class="muted">(${groups[cat].length})</span></div>
+          <ul class="${listClass}">${groups[cat].map((m) => `<li>${escapeHtml(m)}</li>`).join('')}</ul>
+        </div>`;
+    }).join('');
+}
+
 function renderOptimizeResults(result) {
   const panel = document.getElementById('optimize-results');
   panel.hidden = false;
 
+  const securityCount = result.changes.filter((c) => c.category === 'security').length
+    + result.suggestions.filter((s) => s.category === 'security').length;
+
   const changesEl = document.getElementById('optimize-changes');
   changesEl.innerHTML = result.changes.length
-    ? result.changes.map((c) => `<li>${escapeHtml(c)}</li>`).join('')
-    : '<li style="opacity:.6">Nothing to change — this file already looks solid.</li>';
+    ? renderGroupedList(result.changes, 'change')
+    : '<div class="empty" style="padding:16px;">Nothing to change — this file already looks solid.</div>';
 
+  const suggestionsHead = document.getElementById('optimize-suggestions-head');
   const suggestionsEl = document.getElementById('optimize-suggestions');
-  suggestionsEl.innerHTML = (result.suggestions || []).map((s) => `<li>${escapeHtml(s)}</li>`).join('');
+  if (result.suggestions.length) {
+    suggestionsHead.hidden = false;
+    suggestionsEl.innerHTML = renderGroupedList(result.suggestions, 'suggestion');
+  } else {
+    suggestionsHead.hidden = true;
+    suggestionsEl.innerHTML = '';
+  }
+
+  document.getElementById('optimize-security-banner').hidden = securityCount === 0;
+  document.getElementById('optimize-security-count').textContent = securityCount;
 
   const diffEl = document.getElementById('optimize-diff');
   diffEl.innerHTML = result.diff.map((part) => {
@@ -378,6 +477,217 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// ---------- Generate Dockerfile ----------
+let lastDetectedStack = null;
+let lastGeneratedDockerfile = null;
+
+function initGenerateView() {
+  document.getElementById('generate-detect-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('generate-file-input');
+    const rawFiles = Array.from(fileInput.files || []);
+    if (rawFiles.length === 0) {
+      alert('Upload at least one project file (package.json, requirements.txt, go.mod, pom.xml, or index.html).');
+      return;
+    }
+
+    // Only read content for small text files that the detector actually inspects —
+    // no need to read binaries or huge files just to check their name.
+    const files = await Promise.all(rawFiles.map(async (f) => {
+      const readable = /package\.json$/i.test(f.name) && f.size < 200_000;
+      return { name: f.name, content: readable ? await f.text() : undefined };
+    }));
+
+    const btn = document.getElementById('generate-detect-btn');
+    btn.disabled = true;
+    btn.textContent = 'Detecting…';
+    try {
+      const detected = await api('/generate/detect', { method: 'POST', body: JSON.stringify({ files }) });
+      lastDetectedStack = detected;
+
+      document.getElementById('generate-confirm').hidden = false;
+      document.getElementById('generate-result').hidden = true;
+      document.getElementById('generate-detected-note').textContent =
+        detected.stack === 'unknown'
+          ? 'Couldn\'t auto-detect a stack from those files — pick one manually below.'
+          : `Detected: ${detected.label} (${detected.confidence}). Adjust anything below before generating.`;
+      document.getElementById('generate-stack').value = detected.stack === 'unknown' ? 'node' : detected.stack;
+      document.getElementById('generate-port').value = detected.port;
+      document.getElementById('generate-start-command').value = detected.startCommand || '';
+      document.getElementById('generate-build-command').value = detected.buildCommand || '';
+    } catch (err) {
+      alert(`Detection failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Detect my stack';
+    }
+  });
+
+  document.getElementById('generate-build-btn').addEventListener('click', async () => {
+    const stack = document.getElementById('generate-stack').value;
+    const port = parseInt(document.getElementById('generate-port').value, 10) || 3000;
+    const startCommand = document.getElementById('generate-start-command').value.trim();
+    const buildCommand = document.getElementById('generate-build-command').value.trim();
+
+    const btn = document.getElementById('generate-build-btn');
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    try {
+      const { dockerfile } = await api('/generate/dockerfile', {
+        method: 'POST',
+        body: JSON.stringify({ stack, port, startCommand: startCommand || undefined, buildCommand: buildCommand || undefined }),
+      });
+      lastGeneratedDockerfile = dockerfile;
+      document.getElementById('generate-result').hidden = false;
+      document.getElementById('generate-output').textContent = dockerfile;
+    } catch (err) {
+      alert(`Generate failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate Dockerfile';
+    }
+  });
+
+  document.getElementById('generate-download-btn').addEventListener('click', () => {
+    if (!lastGeneratedDockerfile) return;
+    const blob = new Blob([lastGeneratedDockerfile], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Dockerfile';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('generate-to-optimize-btn').addEventListener('click', () => {
+    if (!lastGeneratedDockerfile) return;
+    showView('optimize');
+    document.getElementById('optimize-type').value = 'dockerfile';
+    document.getElementById('optimize-type').dispatchEvent(new Event('change'));
+    document.getElementById('optimize-input').value = lastGeneratedDockerfile;
+  });
+}
+
+// ---------- Storage ----------
+function bytesToHuman(bytes) {
+  if (bytes === null || bytes === undefined) return '—';
+  const mib = bytes / 1024 / 1024;
+  return mib >= 1024 ? `${(mib / 1024).toFixed(2)} GiB` : `${mib.toFixed(0)} MiB`;
+}
+
+async function renderStorageView() {
+  try {
+    const status = await api('/storage/status');
+    renderStorageStatus(status);
+  } catch (err) {
+    document.getElementById('storage-gauge-label').textContent = `Couldn't load storage status: ${err.message}`;
+  }
+}
+
+function renderStorageStatus(status) {
+  const fill = document.getElementById('storage-gauge-fill');
+  const label = document.getElementById('storage-gauge-label');
+
+  if (status.diskUsagePercent === null) {
+    fill.style.width = '0%';
+    label.textContent = 'Disk usage unavailable on this platform — Docker reclaimable space still shown below when Docker is reachable.';
+  } else {
+    fill.style.width = `${status.diskUsagePercent}%`;
+    fill.className = 'gauge-fill' + (status.diskUsagePercent >= status.warnThresholdPercent ? ' gauge-danger' : status.diskUsagePercent >= status.warnThresholdPercent - 10 ? ' gauge-warn' : '');
+    label.textContent = `${status.diskUsagePercent}% used (warns at ${status.warnThresholdPercent}%) · Docker reclaimable: ${bytesToHuman(status.dockerReclaimableBytes)} · last checked ${status.lastCheckedAt || 'never'}`;
+  }
+
+  const pendingPanel = document.getElementById('storage-pending-panel');
+  if (status.pending) {
+    pendingPanel.hidden = false;
+    document.getElementById('storage-pending-reason').textContent = status.pending.reason;
+  } else {
+    pendingPanel.hidden = true;
+  }
+
+  const historyEl = document.getElementById('storage-history');
+  historyEl.innerHTML = status.history.length
+    ? status.history.map((h) => `
+      <div class="card-row" style="cursor:default;">
+        <div class="card-row-main">
+          <span class="card-row-name">${escapeHtml(h.action)}</span>
+          <span class="card-row-meta">${escapeHtml(h.detail)} · ${h.at}</span>
+        </div>
+      </div>`).join('')
+    : '<div class="empty">No prune activity yet.</div>';
+
+  renderDockerBreakdown(status.dockerBreakdown);
+  renderK8sBreakdown(status.k8s);
+}
+
+function renderDockerBreakdown(d) {
+  const el = document.getElementById('storage-docker-breakdown');
+  if (!d || !d.reachable) {
+    el.innerHTML = '<div class="empty">Docker isn\'t reachable from the Kontrolix server right now.</div>';
+    return;
+  }
+  el.innerHTML = `<div class="insight-row">
+    <div class="insight-stat"><span class="insight-stat-label">Images</span><span class="insight-stat-value">${d.images.count} (${bytesToHuman(d.images.totalBytes)}, ${bytesToHuman(d.images.reclaimableBytes)} reclaimable)</span></div>
+    <div class="insight-stat"><span class="insight-stat-label">Containers</span><span class="insight-stat-value">${d.containers.count} (${d.containers.runningCount} running, ${d.containers.stoppedCount} stopped)</span></div>
+    <div class="insight-stat"><span class="insight-stat-label">Volumes</span><span class="insight-stat-value">${d.volumes.count} (${bytesToHuman(d.volumes.totalBytes)})</span></div>
+    <div class="insight-stat"><span class="insight-stat-label">Build cache</span><span class="insight-stat-value">${bytesToHuman(d.buildCache.totalBytes)}</span></div>
+  </div>`;
+}
+
+function renderK8sBreakdown(k) {
+  const el = document.getElementById('storage-k8s-breakdown');
+  if (!k || !k.reachable) {
+    el.innerHTML = '<div class="empty">No reachable Kubernetes cluster (checked ~/.kube/config) — this section fills in once a cluster is configured.</div>';
+    return;
+  }
+  const totalAllocatable = k.nodes.reduce((s, n) => s + (n.allocatableEphemeralBytes || 0), 0);
+  const totalPvc = k.pvcs.reduce((s, p) => s + (p.capacityBytes || 0), 0);
+  el.innerHTML = `
+    <div class="insight-row">
+      <div class="insight-stat"><span class="insight-stat-label">Nodes</span><span class="insight-stat-value">${k.nodes.length} (${bytesToHuman(totalAllocatable)} allocatable ephemeral storage)</span></div>
+      <div class="insight-stat"><span class="insight-stat-label">PVCs</span><span class="insight-stat-value">${k.pvcs.length} (${bytesToHuman(totalPvc)} claimed)</span></div>
+    </div>
+    ${k.pvcs.length ? `<div class="stack">${k.pvcs.map((p) => `
+      <div class="card-row" style="cursor:default;">
+        <div class="card-row-main">
+          <span class="card-row-name mono">${escapeHtml(p.namespace)}/${escapeHtml(p.name)}</span>
+          <span class="card-row-meta">${bytesToHuman(p.capacityBytes)} · ${escapeHtml(p.storageClassName || 'default storage class')}</span>
+        </div>
+        <span class="badge ${p.phase === 'Bound' ? 'badge-success' : 'badge-pending'}">${escapeHtml(p.phase || 'unknown')}</span>
+      </div>`).join('')}</div>` : ''}
+  `;
+}
+
+function initStorageView() {
+  document.getElementById('storage-check-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('storage-check-btn');
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    try {
+      const status = await api('/storage/check', { method: 'POST' });
+      renderStorageStatus(status);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Check now';
+    }
+  });
+
+  document.getElementById('storage-prune-btn').addEventListener('click', async () => {
+    if (!confirm('Prune dangling images and stopped containers now? This cannot be undone.')) return;
+    const btn = document.getElementById('storage-prune-btn');
+    btn.disabled = true;
+    btn.textContent = 'Pruning…';
+    try {
+      await api('/storage/prune', { method: 'POST' });
+      await renderStorageView();
+    } catch (err) {
+      alert(`Prune failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Approve — prune now';
+    }
+  });
+}
+
 // ---------- Nav wiring ----------
 document.querySelectorAll('.rail-link[data-view]').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -385,6 +695,8 @@ document.querySelectorAll('.rail-link[data-view]').forEach((btn) => {
     showView(view);
     if (view === 'jobs') renderJobsList();
     if (view === 'runs') renderRunsList();
+    if (view === 'optimize') populateOptimizeHistoryDropdown();
+    if (view === 'storage') renderStorageView();
   });
 });
 document.querySelectorAll('[data-goto]').forEach((btn) => {
@@ -404,6 +716,8 @@ async function checkServerStatus() {
 // ---------- init ----------
 initNewJobForm();
 initOptimizeView();
+initGenerateView();
+initStorageView();
 renderStepsEditor();
 renderJobsList();
 checkServerStatus();

@@ -8,6 +8,7 @@ const STEP_HANDLERS = {
   composeConvert: require('./steps/composeConvert'),
   k8sDeploy: require('./steps/k8sDeploy'),
   optimize: require('./steps/optimize'),
+  devCheck: require('./steps/devCheck'),
 };
 
 function insertLog(runId, message, level = 'info') {
@@ -35,7 +36,7 @@ function startRun(job, triggerSource = 'manual') {
   insertLog(runId, `Run started for job "${job.name}" (trigger: ${triggerSource})`, 'step');
 
   // Fire and forget - executes in background
-  executeSteps(runId, steps).catch((err) => {
+  executeSteps(runId, job.id, steps).catch((err) => {
     insertLog(runId, `Run failed: ${err.message}`, 'error');
     updateRun(runId, { status: 'failed', finished_at: new Date().toISOString() });
   });
@@ -43,9 +44,11 @@ function startRun(job, triggerSource = 'manual') {
   return runId;
 }
 
-async function executeSteps(runId, steps) {
+async function executeSteps(runId, jobId, steps) {
   const ctx = {
     vars: {},
+    runId,
+    jobId,
     log: (message, level = 'info') => insertLog(runId, message, level),
   };
 

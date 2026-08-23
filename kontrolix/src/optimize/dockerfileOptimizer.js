@@ -3,6 +3,10 @@
 // Riskier structural changes (multi-stage build split) are only suggested as text,
 // since blindly rewriting build semantics can break the image.
 
+const { checkVulnerableBase } = require('../security/vulnImageCheck');
+const { scanContent } = require('../security/secretScanner');
+const { tag } = require('./categorize');
+
 const SLIMMER_BASE_IMAGES = [
   { match: /^node:(\d+)(\.\d+)?(\.\d+)?$/, replace: (m) => `node:${m[1]}-alpine` },
   { match: /^node:(\d+)(\.\d+)?(\.\d+)?-bullseye$/, replace: (m) => `node:${m[1]}-alpine` },
@@ -31,6 +35,10 @@ function optimizeDockerfile(content) {
   const changes = [];
   const suggestions = [];
 
+  scanContent(content, 'Dockerfile').forEach((f) => {
+    suggestions.push(tag('security', `Possible ${f.type} found on line ${f.line} (${f.redacted}) — a value baked into ENV/ARG or RUN is permanently visible in \`docker history\`, even in later stages. Pass it at runtime (--env, a secrets mount, or Docker BuildKit's --secret) instead.`));
+  });
+
   const fromLines = lines
     .map((line, idx) => ({ line, idx }))
     .filter(({ line }) => /^\s*FROM\s+/i.test(line));
@@ -50,7 +58,7 @@ function optimizeDockerfile(content) {
       const slimImage = suggestSlimBase(image);
       if (slimImage) {
         lines[lastFrom.idx] = `${prefix}${slimImage}${suffix}`;
-        changes.push(`Swapped base image "${image}" → "${slimImage}" for a smaller runtime footprint — re-test the build, some native deps behave differently on alpine (musl vs glibc)`);
+        changes.push(tag('performance', `Swapped base image "${image}" → "${slimImage}" for a smaller runtime footprint — re-test the build, some native deps behave differently on alpine (musl vs glibc)`));
       }
     }
   }
@@ -71,9 +79,9 @@ function optimizeDockerfile(content) {
     } else {
       lines.splice(insertAt, 0, ...userBlock);
     }
-    changes.push('Added a non-root user and USER directive — the addgroup/adduser line tries both Alpine and Debian/Ubuntu syntax so it works on either base image');
+    changes.push(tag('security', 'Added a non-root user and USER directive — the addgroup/adduser line tries both Alpine and Debian/Ubuntu syntax so it works on either base image'));
   } else if (usesScratch) {
-    suggestions.push('Base image is "scratch" — there is no shell to create a user, so run the built binary with a numeric USER set at build time in the builder stage instead (e.g. USER 1000 before copying), or set runAsUser in your Kubernetes securityContext.');
+    suggestions.push(tag('security', 'Base image is "scratch" — there is no shell to create a user, so run the built binary with a numeric USER set at build time in the builder stage instead (e.g. USER 1000 before copying), or set runAsUser in your Kubernetes securityContext.'));
   }
 
   // 3. HEALTHCHECK if a port is exposed
@@ -87,16 +95,26 @@ function optimizeDockerfile(content) {
     } else {
       lines.push('', healthLine);
     }
-    changes.push(`Added a HEALTHCHECK against port ${port} — swap "wget" for curl or a custom check if wget isn't available in the base image`);
+    changes.push(tag('reliability', `Added a HEALTHCHECK against port ${port} — swap "wget" for curl or a custom check if wget isn't available in the base image`));
   }
 
   // 4. Multi-stage suggestion (not auto-applied — structural/build-tool risk)
   if (!isMultiStage) {
     const hasBuildTooling = /\b(npm ci|npm install|pip install|go build|mvn |gradle |gcc |make )\b/i.test(content);
     if (hasBuildTooling) {
-      suggestions.push('This looks like a single-stage build that installs build tooling into the final image. Consider splitting into a multi-stage build: compile/install in a "builder" stage, then COPY only the built artifacts into a slim final stage — this drops compilers and dev dependencies from the shipped image.');
+      suggestions.push(tag('performance', 'This looks like a single-stage build that installs build tooling into the final image. Consider splitting into a multi-stage build: compile/install in a "builder" stage, then COPY only the built artifacts into a slim final stage — this drops compilers and dev dependencies from the shipped image.'));
     }
   }
+
+  // 5. Flag EOL/outdated base images (every FROM, not just the last — suggestion only, never auto-bumps a major version)
+  fromLines.forEach(({ line }) => {
+    const m = line.match(/^\s*FROM\s+([^\s]+)/i);
+    if (!m) return;
+    const check = checkVulnerableBase(m[1]);
+    if (check.outdated) {
+      suggestions.push(tag('security', `Base image "${m[1]}" looks outdated: ${check.reason}. Consider moving to ${check.recommend} — not auto-applied since a major-version bump can change runtime behavior.`));
+    }
+  });
 
   return { optimized: lines.join('\n'), changes, suggestions };
 }

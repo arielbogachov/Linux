@@ -4,18 +4,30 @@ A small, Jenkins-style automation server for pipelines that span **Docker** and 
 
 ## Features
 
-- **Pipeline steps**: `dockerBuild`, `dockerPush`, `composeConvert` (Compose → K8s YAML), `k8sDeploy`, `optimize`, `shell`
+- **Pipeline steps**: `dockerBuild`, `dockerPush`, `composeConvert` (Compose → K8s YAML), `k8sDeploy`, `optimize`, `devCheck`, `shell`
 - **Triggers**: manual (click Run), cron schedule, or webhook (`POST /webhook/:jobName`)
-- **Persistence**: SQLite-backed job definitions, run history, and step-by-step logs
-- **Web dashboard**: create pipelines, watch live logs, browse run history, one-click optimize
+- **Persistence**: SQLite-backed job definitions, run history, step-by-step logs, and dev-check telemetry
+- **Web dashboard**: create pipelines, watch live logs, browse run history, one-click optimize, generate a Dockerfile from scratch, watch server storage
 - **CLI**: script the same server from your terminal
-- **⚡ One-click optimize**: paste a Kubernetes manifest, `docker-compose.yml`, or `Dockerfile` and get back a hardened version — resource requests/limits, liveness/readiness probes or healthchecks, non-root/read-only security context, and (for Dockerfiles) a slimmer base image + `HEALTHCHECK`. You always see a diff before anything is applied.
+- **⚡ One-click optimize**: paste a Kubernetes manifest, `docker-compose.yml`, or `Dockerfile` and get back a hardened version. You always see a diff before anything is applied.
+- **🧩 Dockerfile generator**: for people with zero Docker experience — upload your project files, Kontrolix detects the stack (Node/Python/Go/Java/static site), you confirm the port and start command, it generates a real multi-stage Dockerfile.
+- **📊 Kontrolix Insights**: unlike static manifest linters, Kontrolix actually *runs* your image (via the `devCheck` step) and remembers what happened. Resource sizing in Optimize can be computed from real observed memory/CPU usage instead of generic guesses, and recurring crash/error patterns across runs are surfaced automatically.
+- **🗄 Storage guard**: watches server disk usage and Docker's reclaimable space in the background. It only ever surfaces a recommendation — nothing is pruned until you click Approve.
+
+### What one-click Optimize checks now
+
+| Target | Auto-applied | Suggestion only |
+|---|---|---|
+| Kubernetes YAML | resource requests/limits (from Insights history if available) · liveness/readiness probes · security context hardening · PVC auto-added for stateful images (postgres/mysql/mongo/redis/etc.) · NetworkPolicy generated (default-deny except same-namespace) | outdated base image · possible leaked secret in the manifest text |
+| docker-compose.yml | `deploy.resources` (from Insights history if available) · healthcheck · security hardening · named volume auto-added for stateful images | outdated base image · possible leaked secret |
+| Dockerfile | slimmer base image swap · non-root `USER` · `HEALTHCHECK` | multi-stage build split · outdated base image · possible leaked secret (private keys, AWS/GitHub/Stripe/Slack/Google keys, JWTs, generic api-key/secret patterns) |
 
 ## Requirements
 
 - Node.js 22.13+ (uses the built-in `node:sqlite` module — no native compiler needed)
-- Docker daemon running locally (for `dockerBuild` / `dockerPush` steps) — the server talks to it via the Docker socket, same as the `docker` CLI
+- Docker daemon running locally (for `dockerBuild` / `dockerPush` / `devCheck` steps) — the server talks to it via the Docker socket, same as the `docker` CLI
 - A kubeconfig at `~/.kube/config` (or in-cluster config) for `k8sDeploy` steps
+- `df` on PATH (Linux/macOS) for the storage guard's disk-usage reading — on Windows/Git Bash this gracefully reports "unavailable," Docker reclaimable-space stats still work
 
 ## Setup
 

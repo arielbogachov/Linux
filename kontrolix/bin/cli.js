@@ -110,32 +110,46 @@ program
     console.log(`Deleted job "${name}"`);
   });
 
+const CATEGORY_ICONS = { security: '🔒', performance: '⚡', reliability: '🩺', storage: '🗄', general: 'ℹ️' };
+function formatEntry(e) {
+  return typeof e === 'string' ? e : `${CATEGORY_ICONS[e.category] || ''} [${e.category}] ${e.message}`;
+}
+
 program
   .command('optimize <file>')
   .description('Optimize a K8s manifest, docker-compose.yml, or Dockerfile in one click')
   .option('-t, --type <type>', 'k8s | compose | dockerfile (auto-detected from filename if omitted)')
   .option('-a, --apply', 'write the optimized file to ./optimized-output on the server instead of just previewing')
   .option('-o, --out <path>', 'save the optimized content locally instead of printing it')
+  .option('-j, --job <name>', 'size resources using this job\'s real devCheck run history instead of static defaults')
   .action(async (file, opts) => {
     const content = fs.readFileSync(file, 'utf8');
     const type = opts.type || detectType(file);
 
+    let jobId;
+    if (opts.job) {
+      const jobs = await api('/api/jobs');
+      const job = jobs.find((j) => j.name === opts.job);
+      if (!job) return console.error(`Job "${opts.job}" not found`);
+      jobId = job.id;
+    }
+
     if (opts.apply) {
       const result = await api('/api/optimize/apply', {
         method: 'POST',
-        body: JSON.stringify({ type, content, filename: file.split(/[\\/]/).pop() }),
+        body: JSON.stringify({ type, content, filename: file.split(/[\\/]/).pop(), jobId }),
       });
       console.log(`Applied — written to ${result.path} on the server.`);
-      result.changes.forEach((c) => console.log(`  + ${c}`));
+      result.changes.forEach((c) => console.log(`  + ${formatEntry(c)}`));
       return;
     }
 
-    const result = await api('/api/optimize', { method: 'POST', body: JSON.stringify({ type, content }) });
+    const result = await api('/api/optimize', { method: 'POST', body: JSON.stringify({ type, content, jobId }) });
     console.log(`\n${result.changes.length} change(s):`);
-    result.changes.forEach((c) => console.log(`  + ${c}`));
+    result.changes.forEach((c) => console.log(`  + ${formatEntry(c)}`));
     if (result.suggestions.length) {
       console.log(`\n${result.suggestions.length} suggestion(s) (not auto-applied):`);
-      result.suggestions.forEach((s) => console.log(`  ? ${s}`));
+      result.suggestions.forEach((s) => console.log(`  ? ${formatEntry(s)}`));
     }
 
     if (opts.out) {

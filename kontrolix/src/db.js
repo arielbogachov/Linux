@@ -46,6 +46,25 @@ CREATE TABLE IF NOT EXISTS run_logs (
   message TEXT NOT NULL,
   FOREIGN KEY (run_id) REFERENCES runs(id)
 );
+
+-- One row per devCheck step execution. This is what makes Kontrolix's
+-- optimizer different from static linters: it's built from containers
+-- Kontrolix actually ran, not guessed limits.
+CREATE TABLE IF NOT EXISTS run_insights (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  image TEXT,
+  ts TEXT NOT NULL DEFAULT (datetime('now')),
+  outcome TEXT NOT NULL,          -- healthy | crashed | unhealthy
+  exit_code INTEGER,
+  oom_killed INTEGER DEFAULT 0,
+  peak_memory_bytes INTEGER,
+  peak_cpu_percent REAL,
+  error_signature TEXT,           -- normalized first error line, for pattern grouping
+  log_excerpt TEXT,
+  FOREIGN KEY (job_id) REFERENCES jobs(id)
+);
 `);
 
 module.exports = db;

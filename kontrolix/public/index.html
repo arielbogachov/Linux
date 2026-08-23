@@ -21,6 +21,8 @@
       <button class="rail-link" data-view="runs">Runs</button>
       <button class="rail-link" data-view="new-job">New job</button>
       <button class="rail-link" data-view="optimize">⚡ Optimize</button>
+      <button class="rail-link" data-view="generate">🧩 Generate Dockerfile</button>
+      <button class="rail-link" data-view="storage">🗄 Storage</button>
     </nav>
     <div class="rail-foot">
       <span class="dot dot-idle"></span> server: <span id="server-status">checking…</span>
@@ -84,6 +86,7 @@
               <option value="composeConvert">Convert: Compose → Kubernetes</option>
               <option value="k8sDeploy">Kubernetes: deploy manifests</option>
               <option value="optimize">Optimize: harden K8s/Compose/Dockerfile</option>
+              <option value="devCheck">Dev Check: run image, catch crashes before deploy</option>
               <option value="shell">Shell: run command</option>
             </select>
             <button type="button" class="btn btn-ghost" id="add-step-btn">+ Add step</button>
@@ -110,6 +113,11 @@
       <div class="panel">
         <h3 class="panel-title">Pipeline</h3>
         <div id="job-detail-steps" class="chain"></div>
+      </div>
+
+      <div id="job-detail-insights" class="panel" hidden>
+        <h3 class="panel-title">📊 Insights <span class="muted" style="text-transform:none; letter-spacing:0;">— learned from real devCheck runs, not static rules</span></h3>
+        <div id="job-detail-insights-body"></div>
       </div>
 
       <div class="panel">
@@ -143,6 +151,11 @@
           </select>
         </label>
 
+        <label class="field" id="optimize-history-field" hidden>
+          <span>Size resources using real usage from (optional)</span>
+          <select id="optimize-history-job"><option value="">— static defaults —</option></select>
+        </label>
+
         <label class="field">
           <span>Paste file contents (or drop a file)</span>
           <textarea id="optimize-input" class="code-input" rows="14" spellcheck="false" placeholder="paste your YAML or Dockerfile here…"></textarea>
@@ -156,10 +169,18 @@
       </div>
 
       <div id="optimize-results" hidden>
+        <div id="optimize-security-banner" class="security-banner" hidden>
+          🔒 <strong><span id="optimize-security-count">0</span> security-related item(s)</strong> found below — secret scanning, hardened securityContext/security_opt, NetworkPolicy, and outdated base image checks all run automatically as part of this one-click pass.
+        </div>
+
         <div class="panel">
-          <h3 class="panel-title">What changed</h3>
-          <ul id="optimize-changes" class="change-list"></ul>
-          <ul id="optimize-suggestions" class="change-list change-list-suggestion"></ul>
+          <h3 class="panel-title">Applied</h3>
+          <div id="optimize-changes"></div>
+        </div>
+
+        <div class="panel" id="optimize-suggestions-head" hidden>
+          <h3 class="panel-title">Flagged (not auto-applied — needs your judgment)</h3>
+          <div id="optimize-suggestions"></div>
         </div>
 
         <div class="panel">
@@ -171,6 +192,105 @@
           <button type="button" class="btn btn-ghost" id="optimize-download-btn">Download optimized file</button>
           <button type="button" class="btn btn-primary" id="optimize-apply-btn">Apply on server</button>
         </div>
+      </div>
+    </section>
+
+    <!-- GENERATE DOCKERFILE -->
+    <section id="view-generate" class="view" hidden>
+      <header class="view-head">
+        <h1>Generate a Dockerfile</h1>
+      </header>
+      <p class="muted">No Docker experience needed. Point Kontrolix at your project files, confirm the details it detects, and get a working multi-stage Dockerfile.</p>
+
+      <div class="panel form">
+        <label class="field">
+          <span>Upload your project files (package.json, requirements.txt, go.mod, pom.xml, index.html — whatever applies)</span>
+          <input type="file" id="generate-file-input" multiple />
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="generate-detect-btn">Detect my stack</button>
+        </div>
+      </div>
+
+      <div id="generate-confirm" class="panel form" hidden>
+        <h3 class="panel-title">Confirm the details</h3>
+        <p id="generate-detected-note" class="muted" style="margin-top:-8px;"></p>
+
+        <label class="field">
+          <span>Stack</span>
+          <select id="generate-stack">
+            <option value="node">Node.js</option>
+            <option value="python">Python</option>
+            <option value="go">Go</option>
+            <option value="java">Java (Maven)</option>
+            <option value="staticSite">Static site (HTML/CSS/JS)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Port your app listens on</span>
+          <input type="number" id="generate-port" value="3000" />
+        </label>
+        <label class="field">
+          <span>Start command</span>
+          <input type="text" id="generate-start-command" placeholder="e.g. npm start" />
+        </label>
+        <label class="field">
+          <span>Build command (optional)</span>
+          <input type="text" id="generate-build-command" placeholder="e.g. npm run build" />
+        </label>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="generate-build-btn">Generate Dockerfile</button>
+        </div>
+      </div>
+
+      <div id="generate-result" class="panel" hidden>
+        <h3 class="panel-title">Your Dockerfile</h3>
+        <pre id="generate-output" class="terminal"></pre>
+        <div class="form-actions" style="justify-content:flex-end; gap:8px; margin-top:12px;">
+          <button type="button" class="btn btn-ghost" id="generate-download-btn">Download</button>
+          <button type="button" class="btn btn-primary" id="generate-to-optimize-btn">Harden it further in Optimize →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STORAGE -->
+    <section id="view-storage" class="view" hidden>
+      <header class="view-head">
+        <h1>Storage</h1>
+        <button class="btn btn-ghost" id="storage-check-btn">Check now</button>
+      </header>
+      <p class="muted">Kontrolix watches disk usage in the background. It only ever recommends a cleanup — nothing is pruned without you clicking Approve.</p>
+
+      <div class="panel">
+        <h3 class="panel-title">Host disk (where Kontrolix itself runs)</h3>
+        <div id="storage-gauge-wrap">
+          <div class="gauge-track"><div id="storage-gauge-fill" class="gauge-fill"></div></div>
+          <div id="storage-gauge-label" class="muted" style="margin-top:8px;">checking…</div>
+        </div>
+      </div>
+
+      <div id="storage-pending-panel" class="panel" hidden>
+        <h3 class="panel-title">Recommendation</h3>
+        <p id="storage-pending-reason"></p>
+        <div class="form-actions" style="justify-content:flex-end;">
+          <button type="button" class="btn btn-primary" id="storage-prune-btn">Approve — prune now</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">🐳 Docker — images, containers, volumes, build cache</h3>
+        <div id="storage-docker-breakdown"></div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">☸ Kubernetes — node capacity &amp; PersistentVolumeClaims</h3>
+        <div id="storage-k8s-breakdown"></div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Recent activity</h3>
+        <div id="storage-history" class="stack"></div>
       </div>
     </section>
 
