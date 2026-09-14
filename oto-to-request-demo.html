@@ -489,13 +489,13 @@
 
         <form id="demoForm" onsubmit="submitForm(event)">
           <div class="field-row2">
-            <div class="field"><label>שם מלא</label><input type="text" placeholder="ישראל ישראלי" required></div>
+            <div class="field"><label>שם מלא</label><input type="text" id="fullNameField" placeholder="ישראל ישראלי" required></div>
             <div class="field"><label>תפקיד</label><input type="text" id="roleField" placeholder="" required></div>
           </div>
           <div class="field"><label id="orgLabel">שם החברה</label><input type="text" id="orgField" placeholder="" required></div>
           <div class="field-row2">
-            <div class="field"><label>טלפון</label><input type="tel" placeholder="050-000-0000" required></div>
-            <div class="field"><label>אימייל</label><input type="email" placeholder="name@company.com" required></div>
+            <div class="field"><label>טלפון</label><input type="tel" id="phoneField" placeholder="050-000-0000" required></div>
+            <div class="field"><label>אימייל</label><input type="email" id="emailField" placeholder="name@company.com" required></div>
           </div>
           <div class="field"><label id="sizeLabel">גודל צי</label>
             <select id="sizeField">
@@ -504,9 +504,9 @@
               <option>21+ כלי רכב</option>
             </select>
           </div>
-          <div class="field"><label>משהו שכדאי שנדע מראש? (לא חובה)</label><textarea placeholder="לדוגמה: אזור פעילות, סוגי נסיעות, מועד רצוי לפיילוט..."></textarea></div>
+          <div class="field"><label>משהו שכדאי שנדע מראש? (לא חובה)</label><textarea id="notesField" placeholder="לדוגמה: אזור פעילות, סוגי נסיעות, מועד רצוי לפיילוט..."></textarea></div>
           <button type="submit" class="submit-btn civilian" id="submitBtn">קבע פגישת דמו</button>
-          <div class="form-note">נחזור אליכם תוך יום עסקים אחד</div>
+          <div class="form-note" id="formNote">נחזור אליכם תוך יום עסקים אחד</div>
         </form>
 
         <div class="success-state" id="successState">
@@ -573,7 +573,9 @@ const sizeOptions = {
   tours:['עד 20 משתתפים','20–45 משתתפים (אוטובוס אחד)','45+ משתתפים (מספר רכבים)']
 };
 
+let currentSegment = 'civilian';
 function selectSegment(seg){
+  currentSegment = seg;
   document.querySelectorAll('.segment-card').forEach(c=> c.style.opacity = c.dataset.seg===seg? '1':'.55');
   document.querySelectorAll('.form-tab').forEach(t=> t.classList.toggle('active', t.dataset.seg===seg));
 
@@ -597,10 +599,39 @@ function selectSegment(seg){
   submitBtn.textContent = seg==='tours' ? 'קבע פגישת דמו למארגן טיולים' : seg==='vip' ? 'קבע פגישת דמו להפקה' : 'קבע פגישת דמו';
 }
 
-function submitForm(e){
+async function submitForm(e){
   e.preventDefault();
-  document.getElementById('demoForm').style.display = 'none';
-  document.getElementById('successState').classList.add('show');
+  const submitBtn = document.getElementById('submitBtn');
+  const originalLabel = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'שולח…';
+
+  const payload = {
+    category: currentSegment,
+    full_name: document.getElementById('fullNameField').value,
+    role: document.getElementById('roleField').value,
+    company_name: document.getElementById('orgField').value,
+    phone: document.getElementById('phoneField').value,
+    email: document.getElementById('emailField').value,
+    fleet_size: document.getElementById('sizeField').value,
+    notes: document.getElementById('notesField').value,
+  };
+
+  try {
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('request failed');
+    document.getElementById('demoForm').style.display = 'none';
+    document.getElementById('successState').classList.add('show');
+  } catch (err) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+    document.getElementById('formNote').textContent = 'משהו השתבש — נסו שוב או צרו קשר ישירות.';
+    document.getElementById('formNote').style.color = 'var(--danger)';
+  }
 }
 
 selectSegment('civilian');
