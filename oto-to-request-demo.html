@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>אוטוטו — בקשת דמו לחברות, הפקות ויחידות</title>
+<title>אוטוטו — בקשת דמו לחברות, הפקות וטיולים מאורגנים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -22,8 +22,8 @@
     --civilian-dim:#1C3F3C;
     --vip:#9B7BFF;
     --vip-dim:#2E2650;
-    --military:#C99A4F;
-    --military-dim:#3B301C;
+    --tours:#C99A4F;
+    --tours-dim:#3B301C;
 
     --success:#3ECF8E;
     --danger:#EC5A50;
@@ -58,7 +58,7 @@
   .brand{ display:flex; align-items:center; gap:12px; }
   .brand-mark{
     width:36px; height:36px; border-radius:10px; flex:none;
-    background:linear-gradient(135deg, var(--civilian), var(--vip) 55%, var(--military));
+    background:linear-gradient(135deg, var(--civilian), var(--vip) 55%, var(--tours));
     position:relative;
   }
   .brand-mark::after{ content:""; position:absolute; inset:7px; border-radius:4px; background:var(--bg); }
@@ -84,7 +84,7 @@
     max-width:760px; margin:0 auto 20px;
   }
   .hero h1 .grad{
-    background:linear-gradient(90deg, var(--civilian), var(--vip), var(--military));
+    background:linear-gradient(90deg, var(--civilian), var(--vip), var(--tours));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
   .hero p{
@@ -144,7 +144,7 @@
   .segment-card:hover{ transform:translateY(-3px); }
   .segment-card.sel-civilian{ border-color:var(--civilian); }
   .segment-card.sel-vip{ border-color:var(--vip); }
-  .segment-card.sel-military{ border-color:var(--military); }
+  .segment-card.sel-tours{ border-color:var(--tours); }
   .segment-icon{
     width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center;
     font-size:20px; margin-bottom:18px;
@@ -160,14 +160,14 @@
   }
   .segment-list.civilian li::before{ color:var(--civilian); }
   .segment-list.vip li::before{ color:var(--vip); }
-  .segment-list.military li::before{ color:var(--military); }
+  .segment-list.tours li::before{ color:var(--tours); }
   .segment-btn{
     padding:11px 16px; border-radius:11px; font-weight:700; font-size:13.5px; border:none; cursor:pointer;
     text-align:center;
   }
   .segment-btn.civilian{ background:var(--civilian); color:#06231F; }
   .segment-btn.vip{ background:var(--vip); color:#1A1030; }
-  .segment-btn.military{ background:var(--military); color:#241C0C; }
+  .segment-btn.tours{ background:var(--tours); color:#241C0C; }
 
   /* ---------- GTM Timeline ---------- */
   .timeline{
@@ -233,7 +233,7 @@
   }
   .form-tab.active.civilian{ background:var(--civilian-dim); color:var(--civilian); border-color:var(--civilian); }
   .form-tab.active.vip{ background:var(--vip-dim); color:var(--vip); border-color:var(--vip); }
-  .form-tab.active.military{ background:var(--military-dim); color:var(--military); border-color:var(--military); }
+  .form-tab.active.tours{ background:var(--tours-dim); color:var(--tours); border-color:var(--tours); }
 
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:13px; color:var(--muted); margin-bottom:7px; font-weight:500; }
@@ -251,7 +251,7 @@
   }
   .submit-btn.civilian{ background:var(--civilian); color:#06231F; }
   .submit-btn.vip{ background:var(--vip); color:#1A1030; }
-  .submit-btn.military{ background:var(--military); color:#241C0C; }
+  .submit-btn.tours{ background:var(--tours); color:#241C0C; }
 
   .form-note{ font-size:12px; color:var(--muted-2); text-align:center; margin-top:14px; }
 
@@ -284,7 +284,7 @@
   <div class="hero">
     <div class="eyebrow-badge">אוטוטו — כי הנהג תמיד כבר בדרך</div>
     <h1>הפלטפורמה שמחליפה <span class="grad">טפסי לידים וטלפונים</span><br>במכרז שקוף בזמן אמת</h1>
-    <p>Marketplace אחד להסעות קבוצתיות, VIP והפקות, ושאטלים לבסיסי צה"ל — עם תמחור שקוף, אימות זהות וניהול צי מרכזי.</p>
+    <p>Marketplace אחד להסעות קבוצתיות, VIP והפקות, וטיולים מאורגנים ברחבי הארץ — עם תמחור שקוף, מכרז חי בין נהגים וניהול צי מרכזי.</p>
     <div class="hero-ctas">
       <a href="#demo-form" class="btn-primary">קבע פגישת דמו</a>
       <a href="#segments" class="btn-secondary">איזה מסלול מתאים לי?</a>
@@ -293,7 +293,7 @@
     <div class="stat-strip">
       <div class="stat-cell"><div class="stat-num">3</div><div class="stat-label">פלחי שוק במקום אחד</div></div>
       <div class="stat-cell"><div class="stat-num">3%–15%</div><div class="stat-label">עמלה, לפי סוג נסיעה</div></div>
-      <div class="stat-cell"><div class="stat-num">40%</div><div class="stat-label">הוזלה ממוצעת לחיילים</div></div>
+      <div class="stat-cell"><div class="stat-num">25%</div><div class="stat-label">חיסכון בהזמנה קבוצתית</div></div>
       <div class="stat-cell"><div class="stat-num">30–50%</div><div class="stat-label">חיסכון בחזרות ריקות</div></div>
     </div>
   </div>
@@ -318,7 +318,7 @@
           <tr>
             <td><div class="row-title">אפליקציות מוניות</div><div class="row-sub">Gett, Yango, Taxi4You</div></td>
             <td>רכב עד 6–10 מקומות</td>
-            <td>לא מתאים לקבוצות, אין מענה VIP או צבאי</td>
+            <td>לא מתאים לקבוצות, אין מענה VIP או לטיולים מאורגנים</td>
           </tr>
           <tr>
             <td><div class="row-title">חברות הסעה ישירות</div><div class="row-sub">חברות הסעה גדולות</div></td>
@@ -366,16 +366,16 @@
         <button class="segment-btn vip">דמו למשרד הפקות</button>
       </div>
 
-      <div class="segment-card sel-military" data-seg="military" onclick="selectSegment('military')">
-        <div class="segment-icon" style="background:var(--military-dim); color:var(--military);">⛨</div>
-        <h3>יחידות ובסיסים</h3>
-        <p>ערוץ ייעודי למפקדים וקציני לוגיסטיקה — הזמנת שאטלים שיתופיים לחיילים במחירון מועדף.</p>
-        <ul class="segment-list military">
-          <li>הזמנה בקליק למפקדים</li>
-          <li>אימות זהות מול מאגר היחידה</li>
-          <li>סבסוד ומחירון צבא ייעודי</li>
+      <div class="segment-card sel-tours" data-seg="tours" onclick="selectSegment('tours')">
+        <div class="segment-icon" style="background:var(--tours-dim); color:var(--tours);">⛰</div>
+        <h3>טיולים מאורגנים</h3>
+        <p>הובלה קבוצתית לטיולים, סיורים וימי כיף ברחבי הארץ — מהזמנה ועד חזרה הביתה, הכל בפלטפורמה אחת.</p>
+        <ul class="segment-list tours">
+          <li>התאמת רכב לפי גודל הקבוצה</li>
+          <li>מחיר שקוף מראש לכל המשתתפים</li>
+          <li>מעקב חי לאורך כל המסלול</li>
         </ul>
-        <button class="segment-btn military">דמו ליחידה / בסיס</button>
+        <button class="segment-btn tours">דמו למארגני טיולים</button>
       </div>
     </div>
   </section>
@@ -397,7 +397,7 @@
         <div class="tl-phase">שלב ב׳</div>
         <div class="tl-months">חודשים 4–6</div>
         <h4>פיילוטים ממוקדים</h4>
-        <p>הרצת פיילוט מול 5 משרדי הפקות VIP, במקביל לפיילוט שאטלים עם יחידות ווועדי חיילים בדרום.</p>
+        <p>הרצת פיילוט מול 5 משרדי הפקות VIP, במקביל לפיילוט מול מועדוני טיולים וארגוני נוער בצפון ובדרום.</p>
       </div>
       <div class="tl-card">
         <div class="tl-phase">שלב ג׳</div>
@@ -433,7 +433,7 @@
         <div class="form-tabs" id="formTabs">
           <button class="form-tab active civilian" data-seg="civilian" onclick="selectSegment('civilian')">חברת הסעה</button>
           <button class="form-tab vip" data-seg="vip" onclick="selectSegment('vip')">הפקה / VIP</button>
-          <button class="form-tab military" data-seg="military" onclick="selectSegment('military')">יחידה / בסיס</button>
+          <button class="form-tab tours" data-seg="tours" onclick="selectSegment('tours')">טיולים מאורגנים</button>
         </div>
 
         <form id="demoForm" onsubmit="submitForm(event)">
@@ -500,26 +500,26 @@ const segmentData = {
     orgHint:'לדוגמה: הפקות לילה לבן',
     sizeLabel:'היקף נסיעות בהפקה טיפוסית'
   },
-  military:{
-    tabLabel:'יחידה / בסיס',
-    sideTitle:'דמו ליחידות ובסיסים',
-    sideDesc:'נעבור על תהליך ההזמנה למפקדים, אימות הזהות מול מאגר היחידה, ומודל ההסעה השיתופית והתמחור המועדף לחיילים.',
+  tours:{
+    tabLabel:'טיולים מאורגנים',
+    sideTitle:'דמו למארגני טיולים',
+    sideDesc:'נעבור על תהליך ההזמנה למארגן הטיול, התאמת כלי הרכב לגודל הקבוצה, ומעקב חי לאורך כל המסלול.',
     features:[
-      ['⛨','אימות זהות צבאית','בהתאם להנחיות ביטחון מידע'],
-      ['⛟','הסעה שיתופית','השאטל יוצא רק כשנאסף מניין'],
-      ['₪','מחירון צבא מועדף','הוזלה של כ-40% משעות שפל'],
+      ['⛰','התאמת רכב לגודל הקבוצה','מרכב פרטי ועד שיירת אוטובוסים'],
+      ['₪','תמחור שקוף מראש','מחיר קבוע לכל המשתתפים, בלי הפתעות'],
+      ['◍','מעקב חי','שקט נפשי למארגן לאורך כל היום'],
     ],
-    roleHint:'קצין לוגיסטיקה / מפקד',
-    orgLabel:'שם היחידה / בסיס',
-    orgHint:'לדוגמה: בסיס דרום',
-    sizeLabel:'היקף חיילים משוער לשאטל'
+    roleHint:'מארגן טיול / רכז קבוצה',
+    orgLabel:'שם הארגון / הקבוצה',
+    orgHint:'לדוגמה: מועדון טיולים "השביל הישראלי"',
+    sizeLabel:'מספר משתתפים משוער'
   }
 };
 
 const sizeOptions = {
   civilian:['1–5 כלי רכב','6–20 כלי רכב','21+ כלי רכב'],
   vip:['1–2 כלים בהפקה','3–5 כלים בהפקה','6+ כלים בהפקה'],
-  military:['עד 15 חיילים','15–30 חיילים','30+ חיילים (מספר שאטלים)']
+  tours:['עד 20 משתתפים','20–45 משתתפים (אוטובוס אחד)','45+ משתתפים (מספר רכבים)']
 };
 
 function selectSegment(seg){
@@ -543,7 +543,7 @@ function selectSegment(seg){
 
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.className = 'submit-btn ' + seg;
-  submitBtn.textContent = seg==='military' ? 'קבע פגישת דמו ליחידה' : seg==='vip' ? 'קבע פגישת דמו להפקה' : 'קבע פגישת דמו';
+  submitBtn.textContent = seg==='tours' ? 'קבע פגישת דמו למארגן טיולים' : seg==='vip' ? 'קבע פגישת דמו להפקה' : 'קבע פגישת דמו';
 }
 
 function submitForm(e){
