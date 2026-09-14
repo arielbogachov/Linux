@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>אוטוטו — בקשת דמו לחברות, הפקות ויחידות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A1220;
+    --bg-alt:#0E1830;
+    --panel:#101B32;
+    --card:#16223D;
+    --card-2:#1B2A49;
+    --border:#263252;
+    --text:#EEF1F7;
+    --muted:#8C99B8;
+    --muted-2:#6B7796;
+
+    --civilian:#2FB6A6;
+    --civilian-dim:#1C3F3C;
+    --vip:#9B7BFF;
+    --vip-dim:#2E2650;
+    --military:#C99A4F;
+    --military-dim:#3B301C;
+
+    --success:#3ECF8E;
+    --danger:#EC5A50;
+    --warn:#E8B94E;
+
+    --radius-m:16px;
+    --radius-l:22px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 20% -10%, #14213F 0%, transparent 60%),
+      radial-gradient(1000px 600px at 100% 10%, #16233A 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Heebo', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{ font-family:'Rubik', sans-serif; margin:0; }
+  a{ color:inherit; }
+  ::selection{ background:var(--vip); color:#fff; }
+
+  .shell{ max-width:1180px; margin:0 auto; padding:0 24px; }
+
+  /* ---------- Nav ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px 0;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:36px; height:36px; border-radius:10px; flex:none;
+    background:linear-gradient(135deg, var(--civilian), var(--vip) 55%, var(--military));
+    position:relative;
+  }
+  .brand-mark::after{ content:""; position:absolute; inset:7px; border-radius:4px; background:var(--bg); }
+  .brand-name{ font-weight:700; font-size:19px; }
+  .nav-cta{
+    padding:10px 20px; border-radius:999px; background:var(--text); color:#0A1220;
+    font-weight:700; font-size:14px; border:none; cursor:pointer; text-decoration:none;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:64px 0 56px;
+    text-align:center;
+  }
+  .eyebrow-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--panel); border:1px solid var(--border);
+    padding:7px 16px; border-radius:999px; font-size:13px; color:var(--muted);
+    margin-bottom:26px;
+  }
+  .hero h1{
+    font-size:44px; line-height:1.18; font-weight:800; letter-spacing:-0.01em;
+    max-width:760px; margin:0 auto 20px;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(90deg, var(--civilian), var(--vip), var(--military));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{
+    color:var(--muted); font-size:16.5px; max-width:560px; margin:0 auto 32px; line-height:1.65;
+  }
+  .hero-ctas{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn-primary{
+    padding:14px 26px; border-radius:12px; background:var(--text); color:#0A1220;
+    font-weight:700; font-size:15px; border:none; cursor:pointer; text-decoration:none;
+  }
+  .btn-secondary{
+    padding:14px 26px; border-radius:12px; background:transparent; color:var(--text);
+    border:1px solid var(--border); font-weight:600; font-size:15px; cursor:pointer; text-decoration:none;
+  }
+
+  .stat-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--border); border:1px solid var(--border); border-radius:var(--radius-m);
+    overflow:hidden; margin-top:56px;
+  }
+  @media (max-width:800px){ .stat-strip{ grid-template-columns:1fr 1fr; } }
+  .stat-cell{ background:var(--panel); padding:24px 20px; text-align:center; }
+  .stat-num{ font-family:'Rubik'; font-size:26px; font-weight:800; }
+  .stat-label{ font-size:12.5px; color:var(--muted); margin-top:6px; }
+
+  /* ---------- Section shared ---------- */
+  section{ padding:64px 0; }
+  .section-head{ max-width:600px; margin:0 auto 40px; text-align:center; }
+  .section-head h2{ font-size:30px; margin-bottom:12px; }
+  .section-head p{ color:var(--muted); font-size:15px; line-height:1.6; }
+  .kicker{ color:var(--muted-2); font-size:13px; font-weight:600; margin-bottom:10px; }
+
+  /* ---------- Competitor table ---------- */
+  .compare{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-m);
+    overflow:hidden;
+  }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  th{ text-align:right; padding:16px 18px; font-size:12.5px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--border); }
+  td{ padding:16px 18px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tr:last-child td{ border-bottom:none; }
+  tr.us td{ background:linear-gradient(90deg, rgba(47,182,166,.08), rgba(155,123,255,.06)); font-weight:600; }
+  tbody tr:not(.us):hover td{ background:rgba(255,255,255,.02); }
+  .row-title{ font-weight:700; margin-bottom:3px; }
+  .row-sub{ color:var(--muted); font-size:12.5px; }
+
+  /* ---------- Segments ---------- */
+  .segment-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  }
+  @media (max-width:900px){ .segment-grid{ grid-template-columns:1fr; } }
+  .segment-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-l);
+    padding:28px 24px; display:flex; flex-direction:column; cursor:pointer;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .segment-card:hover{ transform:translateY(-3px); }
+  .segment-card.sel-civilian{ border-color:var(--civilian); }
+  .segment-card.sel-vip{ border-color:var(--vip); }
+  .segment-card.sel-military{ border-color:var(--military); }
+  .segment-icon{
+    width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center;
+    font-size:20px; margin-bottom:18px;
+  }
+  .segment-card h3{ font-size:18px; margin-bottom:8px; }
+  .segment-card p{ color:var(--muted); font-size:13.5px; line-height:1.6; margin-bottom:18px; flex:1; }
+  .segment-list{ list-style:none; padding:0; margin:0 0 20px; }
+  .segment-list li{
+    font-size:13px; color:var(--muted); padding:6px 0 6px 0; padding-right:20px; position:relative;
+  }
+  .segment-list li::before{
+    content:"✓"; position:absolute; right:0; top:6px; font-size:11px; font-weight:700;
+  }
+  .segment-list.civilian li::before{ color:var(--civilian); }
+  .segment-list.vip li::before{ color:var(--vip); }
+  .segment-list.military li::before{ color:var(--military); }
+  .segment-btn{
+    padding:11px 16px; border-radius:11px; font-weight:700; font-size:13.5px; border:none; cursor:pointer;
+    text-align:center;
+  }
+  .segment-btn.civilian{ background:var(--civilian); color:#06231F; }
+  .segment-btn.vip{ background:var(--vip); color:#1A1030; }
+  .segment-btn.military{ background:var(--military); color:#241C0C; }
+
+  /* ---------- GTM Timeline ---------- */
+  .timeline{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  }
+  @media (max-width:900px){ .timeline{ grid-template-columns:1fr; } }
+  .tl-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-m); padding:24px;
+    position:relative;
+  }
+  .tl-phase{ font-size:12.5px; color:var(--muted-2); font-weight:700; margin-bottom:8px; }
+  .tl-months{
+    display:inline-block; font-size:11.5px; padding:3px 10px; border-radius:999px;
+    background:var(--card-2); color:var(--muted); margin-bottom:14px;
+  }
+  .tl-card h4{ font-size:15.5px; margin-bottom:10px; line-height:1.4; }
+  .tl-card p{ font-size:13px; color:var(--muted); line-height:1.6; margin:0; }
+
+  /* ---------- What you get strip ---------- */
+  .expect-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:56px;
+  }
+  @media (max-width:800px){ .expect-strip{ grid-template-columns:1fr 1fr; } }
+  .expect-item{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:18px; text-align:center;
+  }
+  .expect-item .num{
+    width:26px; height:26px; border-radius:50%; background:var(--card-2); color:var(--text);
+    display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700;
+    margin:0 auto 12px;
+  }
+  .expect-item p{ font-size:13px; color:var(--muted); margin:0; line-height:1.5; }
+
+  /* ---------- Demo request form ---------- */
+  .form-wrap{
+    display:grid; grid-template-columns:1fr 1.1fr; gap:0;
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-l);
+    overflow:hidden;
+  }
+  @media (max-width:900px){ .form-wrap{ grid-template-columns:1fr; } }
+  .form-side{
+    padding:44px 40px;
+    background:
+      radial-gradient(500px 300px at 100% 0%, rgba(155,123,255,.14), transparent 60%),
+      var(--card);
+  }
+  .form-side h3{ font-size:24px; margin-bottom:14px; line-height:1.3; }
+  .form-side p{ color:var(--muted); font-size:14px; line-height:1.65; margin-bottom:26px; }
+  .form-side .mini-feature{ display:flex; gap:12px; margin-bottom:16px; align-items:flex-start; }
+  .form-side .mini-feature .dot{
+    width:22px; height:22px; border-radius:7px; background:var(--card-2); flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:11px; margin-top:1px;
+  }
+  .form-side .mini-feature div p{ margin:0; font-size:13px; color:var(--muted); }
+  .form-side .mini-feature div strong{ font-size:13.5px; display:block; margin-bottom:2px; }
+
+  .form-body{ padding:44px 40px; }
+  .form-tabs{ display:flex; gap:8px; margin-bottom:26px; flex-wrap:wrap; }
+  .form-tab{
+    padding:8px 16px; border-radius:999px; border:1px solid var(--border); background:transparent;
+    color:var(--muted); font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .form-tab.active.civilian{ background:var(--civilian-dim); color:var(--civilian); border-color:var(--civilian); }
+  .form-tab.active.vip{ background:var(--vip-dim); color:var(--vip); border-color:var(--vip); }
+  .form-tab.active.military{ background:var(--military-dim); color:var(--military); border-color:var(--military); }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13px; color:var(--muted); margin-bottom:7px; font-weight:500; }
+  .field input, .field select, .field textarea{
+    width:100%; padding:12px 14px; border-radius:11px; border:1px solid var(--border);
+    background:var(--card-2); color:var(--text); font-family:inherit; font-size:14px; outline:none;
+  }
+  .field textarea{ resize:vertical; min-height:70px; }
+  .field-row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:520px){ .field-row2{ grid-template-columns:1fr; } }
+
+  .submit-btn{
+    width:100%; padding:14px; border-radius:12px; border:none; font-weight:700; font-size:15px;
+    cursor:pointer; margin-top:6px; transition:filter .15s ease;
+  }
+  .submit-btn.civilian{ background:var(--civilian); color:#06231F; }
+  .submit-btn.vip{ background:var(--vip); color:#1A1030; }
+  .submit-btn.military{ background:var(--military); color:#241C0C; }
+
+  .form-note{ font-size:12px; color:var(--muted-2); text-align:center; margin-top:14px; }
+
+  .success-state{ display:none; text-align:center; padding:40px 10px; }
+  .success-state.show{ display:block; }
+  .success-icon{
+    width:56px; height:56px; border-radius:50%; background:#123527; color:var(--success);
+    display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 20px;
+  }
+  .success-state h3{ font-size:20px; margin-bottom:10px; }
+  .success-state p{ color:var(--muted); font-size:14px; line-height:1.6; max-width:340px; margin:0 auto; }
+
+  footer{
+    padding:36px 0; border-top:1px solid var(--border); text-align:center;
+    color:var(--muted-2); font-size:12.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">אוטוטו</div>
+    </div>
+    <a href="#demo-form" class="nav-cta">בקש דמו</a>
+  </nav>
+
+  <div class="hero">
+    <div class="eyebrow-badge">אוטוטו — כי הנהג תמיד כבר בדרך</div>
+    <h1>הפלטפורמה שמחליפה <span class="grad">טפסי לידים וטלפונים</span><br>במכרז שקוף בזמן אמת</h1>
+    <p>Marketplace אחד להסעות קבוצתיות, VIP והפקות, ושאטלים לבסיסי צה"ל — עם תמחור שקוף, אימות זהות וניהול צי מרכזי.</p>
+    <div class="hero-ctas">
+      <a href="#demo-form" class="btn-primary">קבע פגישת דמו</a>
+      <a href="#segments" class="btn-secondary">איזה מסלול מתאים לי?</a>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-cell"><div class="stat-num">3</div><div class="stat-label">פלחי שוק במקום אחד</div></div>
+      <div class="stat-cell"><div class="stat-num">3%–15%</div><div class="stat-label">עמלה, לפי סוג נסיעה</div></div>
+      <div class="stat-cell"><div class="stat-num">40%</div><div class="stat-label">הוזלה ממוצעת לחיילים</div></div>
+      <div class="stat-cell"><div class="stat-num">30–50%</div><div class="stat-label">חיסכון בחזרות ריקות</div></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <div class="kicker">למה עכשיו</div>
+      <h2>השוק היום עובד בטלפון. אנחנו הופכים אותו לשקוף</h2>
+      <p>פורטלי לידים, אפליקציות מוניות וחברות הסעה ישירות — כל אחד פותר רק חלק מהבעיה.</p>
+    </div>
+    <div class="compare">
+      <table>
+        <thead>
+          <tr><th>פתרון</th><th>שחקנים</th><th>הבעיה</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="row-title">פורטלי לידים</div><div class="row-sub">הסעות ישראל, טופ הסעות, KlikBUS</div></td>
+            <td>מוכרים ליד ל-3–5 חברות</td>
+            <td>ספאם טלפוני, אין שקיפות מחיר, אין אפליקציה</td>
+          </tr>
+          <tr>
+            <td><div class="row-title">אפליקציות מוניות</div><div class="row-sub">Gett, Yango, Taxi4You</div></td>
+            <td>רכב עד 6–10 מקומות</td>
+            <td>לא מתאים לקבוצות, אין מענה VIP או צבאי</td>
+          </tr>
+          <tr>
+            <td><div class="row-title">חברות הסעה ישירות</div><div class="row-sub">חברות הסעה גדולות</div></td>
+            <td>מוקד הזמנות טלפוני</td>
+            <td>מחיר קבוע וגבוה, אין השוואה או אופטימיזציה</td>
+          </tr>
+          <tr class="us">
+            <td><div class="row-title">אוטוטו</div><div class="row-sub">Marketplace אחוד</div></td>
+            <td>מכרז הפוך חי בין כל הנהגים</td>
+            <td>שקיפות מלאה, תמחור תחרותי, מותאם לכל פלח</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="segments">
+    <div class="section-head">
+      <div class="kicker">מסלולי דמו</div>
+      <h2>הדמו מותאם לסוג הארגון שלך</h2>
+      <p>בחרו את המסלול הרלוונטי — הטופס למטה יתאים את עצמו אליכם.</p>
+    </div>
+    <div class="segment-grid">
+      <div class="segment-card sel-civilian" data-seg="civilian" onclick="selectSegment('civilian')">
+        <div class="segment-icon" style="background:var(--civilian-dim); color:var(--civilian);">⛟</div>
+        <h3>חברות הסעה</h3>
+        <p>הצטרפו כספקים למכרזים החיים וקבלו זרימת בקשות קבועה — אזרחיות, ארגוניות וחזרות ריקות.</p>
+        <ul class="segment-list civilian">
+          <li>גישה לפיד מכרזים באזור שלכם</li>
+          <li>מכירת חזרות ריקות אוטומטית</li>
+          <li>מנוי חודשי קבוע</li>
+        </ul>
+        <button class="segment-btn civilian">דמו לחברת הסעה</button>
+      </div>
+
+      <div class="segment-card sel-vip" data-seg="vip" onclick="selectSegment('vip')">
+        <div class="segment-icon" style="background:var(--vip-dim); color:var(--vip);">★</div>
+        <h3>הפקות ו-VIP</h3>
+        <p>Ghost Booking, NDA דיגיטלי ולוח בקרה למפיק — לוגיסטיקת הסעות לאמנים וצוותים ברמת פרטיות מקסימלית.</p>
+        <ul class="segment-list vip">
+          <li>פרוטוקול פרטיות מלא לאמנים</li>
+          <li>Tour Manager Dashboard חי</li>
+          <li>נהגים מסווגים בדירוג 4.9+</li>
+        </ul>
+        <button class="segment-btn vip">דמו למשרד הפקות</button>
+      </div>
+
+      <div class="segment-card sel-military" data-seg="military" onclick="selectSegment('military')">
+        <div class="segment-icon" style="background:var(--military-dim); color:var(--military);">⛨</div>
+        <h3>יחידות ובסיסים</h3>
+        <p>ערוץ ייעודי למפקדים וקציני לוגיסטיקה — הזמנת שאטלים שיתופיים לחיילים במחירון מועדף.</p>
+        <ul class="segment-list military">
+          <li>הזמנה בקליק למפקדים</li>
+          <li>אימות זהות מול מאגר היחידה</li>
+          <li>סבסוד ומחירון צבא ייעודי</li>
+        </ul>
+        <button class="segment-btn military">דמו ליחידה / בסיס</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="kicker">איך מצטרפים</div>
+      <h2>תוכנית החדירה לשוק</h2>
+      <p>הדמו הוא הצעד הראשון בתהליך מובנה של שלושה שלבים.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-card">
+        <div class="tl-phase">שלב א׳</div>
+        <div class="tl-months">חודשים 1–3</div>
+        <h4>גיוס היצע ובטא</h4>
+        <p>פנייה ישירה ל-20 חברות עם צי רכבי יוקרה ו-40 חברות עם אוטובוסים באזור הדרום והצפון.</p>
+      </div>
+      <div class="tl-card">
+        <div class="tl-phase">שלב ב׳</div>
+        <div class="tl-months">חודשים 4–6</div>
+        <h4>פיילוטים ממוקדים</h4>
+        <p>הרצת פיילוט מול 5 משרדי הפקות VIP, במקביל לפיילוט שאטלים עם יחידות ווועדי חיילים בדרום.</p>
+      </div>
+      <div class="tl-card">
+        <div class="tl-phase">שלב ג׳</div>
+        <div class="tl-months">חודשים 7–12</div>
+        <h4>התרחבות מלאה</h4>
+        <p>השקה לציבור הרחב, הפעלת "חזרות ריקות" מבוססת AI, והתרחבות ארצית.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="kicker">מה מקבלים בפגישה</div>
+      <h2>30 דקות, בלי מצגות מיותרות</h2>
+      <p>נראה לכם את הפלטפורמה חיה, על תרחיש מהעולם שלכם.</p>
+    </div>
+    <div class="expect-strip">
+      <div class="expect-item"><div class="num">1</div><p>הדגמה חיה של המסלול הרלוונטי לכם</p></div>
+      <div class="expect-item"><div class="num">2</div><p>מענה על שאלות אבטחת מידע ותהליך אימות</p></div>
+      <div class="expect-item"><div class="num">3</div><p>הצעת תמחור ראשונית מותאמת להיקף שלכם</p></div>
+      <div class="expect-item"><div class="num">4</div><p>לוח זמנים אפשרי לפיילוט</p></div>
+    </div>
+  </section>
+
+  <section id="demo-form">
+    <div class="form-wrap">
+      <div class="form-side">
+        <h3 id="sideTitle">בואו נראה לכם איך זה עובד</h3>
+        <p id="sideDesc">פגישת דמו של 30 דקות עם הצוות — נעבור על תרחיש אמיתי מהעולם שלכם ונראה את הפלטפורמה חיה.</p>
+        <div id="sideFeatures"></div>
+      </div>
+      <div class="form-body">
+        <div class="form-tabs" id="formTabs">
+          <button class="form-tab active civilian" data-seg="civilian" onclick="selectSegment('civilian')">חברת הסעה</button>
+          <button class="form-tab vip" data-seg="vip" onclick="selectSegment('vip')">הפקה / VIP</button>
+          <button class="form-tab military" data-seg="military" onclick="selectSegment('military')">יחידה / בסיס</button>
+        </div>
+
+        <form id="demoForm" onsubmit="submitForm(event)">
+          <div class="field-row2">
+            <div class="field"><label>שם מלא</label><input type="text" placeholder="ישראל ישראלי" required></div>
+            <div class="field"><label>תפקיד</label><input type="text" id="roleField" placeholder="" required></div>
+          </div>
+          <div class="field"><label id="orgLabel">שם החברה</label><input type="text" id="orgField" placeholder="" required></div>
+          <div class="field-row2">
+            <div class="field"><label>טלפון</label><input type="tel" placeholder="050-000-0000" required></div>
+            <div class="field"><label>אימייל</label><input type="email" placeholder="name@company.com" required></div>
+          </div>
+          <div class="field"><label id="sizeLabel">גודל צי</label>
+            <select id="sizeField">
+              <option>1–5 כלי רכב</option>
+              <option>6–20 כלי רכב</option>
+              <option>21+ כלי רכב</option>
+            </select>
+          </div>
+          <div class="field"><label>משהו שכדאי שנדע מראש? (לא חובה)</label><textarea placeholder="לדוגמה: אזור פעילות, סוגי נסיעות, מועד רצוי לפיילוט..."></textarea></div>
+          <button type="submit" class="submit-btn civilian" id="submitBtn">קבע פגישת דמו</button>
+          <div class="form-note">נחזור אליכם תוך יום עסקים אחד</div>
+        </form>
+
+        <div class="success-state" id="successState">
+          <div class="success-icon">✓</div>
+          <h3>הבקשה התקבלה</h3>
+          <p>תודה! נציג מהצוות ייצור איתכם קשר תוך יום עסקים אחד לתיאום מועד לדמו החי.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>דמו UI/UX בלבד לצורך המחשת המודל שבמסמך האפיון · הטופס אינו שולח נתונים בפועל</footer>
+</div>
+
+<script>
+const segmentData = {
+  civilian:{
+    tabLabel:'חברת הסעה',
+    sideTitle:'דמו לחברות הסעה',
+    sideDesc:'נראה לכם איך נראה פיד המכרזים, איך מגישים הצעת מחיר בזמן אמת, ואיך הופכים נסיעת חזרה ריקה למקור הכנסה נוסף.',
+    features:[
+      ['◎','גישה לפיד מכרזים','בקשות נסיעה מהאזור שלכם, בזמן אמת'],
+      ['⛟','מכירת חזרות ריקות','חיסכון של 30%–50% שהופך להכנסה'],
+      ['₪','מנוי חודשי','הכנסה קבועה וגישה מלאה למכרזים'],
+    ],
+    roleHint:'מנהל תפעול / בעל החברה',
+    orgLabel:'שם החברה',
+    orgHint:'לדוגמה: הסעות מאיה',
+    sizeLabel:'גודל צי'
+  },
+  vip:{
+    tabLabel:'הפקה / VIP',
+    sideTitle:'דמו למשרדי הפקות ו-VIP',
+    sideDesc:'נדגים את פרוטוקול ה-Ghost Booking, חתימת NDA דיגיטלית, ולוח הבקרה שמאפשר למפיק לראות את כל הרכבים בזמן אמת.',
+    features:[
+      ['◎','Ghost Booking','פרטיות מלאה לאמן עד רגע האיסוף'],
+      ['▤','Tour Manager Dashboard','מעקב חי אחר כל כלי הרכב בהפקה'],
+      ['★','נהגים בדירוג 4.9+','רק Luxury Sprinter מסווגים'],
+    ],
+    roleHint:'מפיק / Tour Manager',
+    orgLabel:'שם ההפקה / החברה',
+    orgHint:'לדוגמה: הפקות לילה לבן',
+    sizeLabel:'היקף נסיעות בהפקה טיפוסית'
+  },
+  military:{
+    tabLabel:'יחידה / בסיס',
+    sideTitle:'דמו ליחידות ובסיסים',
+    sideDesc:'נעבור על תהליך ההזמנה למפקדים, אימות הזהות מול מאגר היחידה, ומודל ההסעה השיתופית והתמחור המועדף לחיילים.',
+    features:[
+      ['⛨','אימות זהות צבאית','בהתאם להנחיות ביטחון מידע'],
+      ['⛟','הסעה שיתופית','השאטל יוצא רק כשנאסף מניין'],
+      ['₪','מחירון צבא מועדף','הוזלה של כ-40% משעות שפל'],
+    ],
+    roleHint:'קצין לוגיסטיקה / מפקד',
+    orgLabel:'שם היחידה / בסיס',
+    orgHint:'לדוגמה: בסיס דרום',
+    sizeLabel:'היקף חיילים משוער לשאטל'
+  }
+};
+
+const sizeOptions = {
+  civilian:['1–5 כלי רכב','6–20 כלי רכב','21+ כלי רכב'],
+  vip:['1–2 כלים בהפקה','3–5 כלים בהפקה','6+ כלים בהפקה'],
+  military:['עד 15 חיילים','15–30 חיילים','30+ חיילים (מספר שאטלים)']
+};
+
+function selectSegment(seg){
+  document.querySelectorAll('.segment-card').forEach(c=> c.style.opacity = c.dataset.seg===seg? '1':'.55');
+  document.querySelectorAll('.form-tab').forEach(t=> t.classList.toggle('active', t.dataset.seg===seg));
+
+  const d = segmentData[seg];
+  document.getElementById('sideTitle').textContent = d.sideTitle;
+  document.getElementById('sideDesc').textContent = d.sideDesc;
+  document.getElementById('sideFeatures').innerHTML = d.features.map(f=>`
+    <div class="mini-feature">
+      <div class="dot" style="color:var(--${seg});">${f[0]}</div>
+      <div><strong>${f[1]}</strong><p>${f[2]}</p></div>
+    </div>`).join('');
+
+  document.getElementById('roleField').placeholder = d.roleHint;
+  document.getElementById('orgLabel').textContent = d.orgLabel;
+  document.getElementById('orgField').placeholder = d.orgHint;
+  document.getElementById('sizeLabel').textContent = d.sizeLabel;
+  document.getElementById('sizeField').innerHTML = sizeOptions[seg].map(o=>`<option>${o}</option>`).join('');
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.className = 'submit-btn ' + seg;
+  submitBtn.textContent = seg==='military' ? 'קבע פגישת דמו ליחידה' : seg==='vip' ? 'קבע פגישת דמו להפקה' : 'קבע פגישת דמו';
+}
+
+function submitForm(e){
+  e.preventDefault();
+  document.getElementById('demoForm').style.display = 'none';
+  document.getElementById('successState').classList.add('show');
+}
+
+selectSegment('civilian');
+</script>
+</body>
+</html>
