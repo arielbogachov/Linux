@@ -126,7 +126,28 @@
   th{ text-align:right; padding:16px 18px; font-size:12.5px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--border); }
   td{ padding:16px 18px; border-bottom:1px solid var(--border); vertical-align:top; }
   tr:last-child td{ border-bottom:none; }
-  tr.us td{ background:linear-gradient(90deg, rgba(47,182,166,.08), rgba(155,123,255,.06)); font-weight:600; }
+  tr.us{ position:relative; }
+  tr.us td{
+    background:linear-gradient(90deg, rgba(47,182,166,.14), rgba(155,123,255,.12));
+    font-weight:700;
+    border-top:2px solid var(--vip);
+    border-bottom:2px solid var(--vip);
+  }
+  tr.us td:first-child{ border-right:5px solid var(--vip); border-radius:0 8px 8px 0; }
+  tr.us td:last-child{ border-left:5px solid var(--civilian); border-radius:8px 0 0 8px; }
+  .row-title-brand{
+    font-size:16.5px; font-weight:800;
+    background:linear-gradient(90deg, var(--civilian), var(--vip));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .brand-badge{
+    -webkit-background-clip:initial; background-clip:initial;
+    font-size:10.5px; font-weight:700; color:#0A1220;
+    background:var(--warn);
+    padding:2px 8px; border-radius:999px;
+    -webkit-text-fill-color:#0A1220;
+  }
   tbody tr:not(.us):hover td{ background:rgba(255,255,255,.02); }
   .row-title{ font-weight:700; margin-bottom:3px; }
   .row-sub{ color:var(--muted); font-size:12.5px; }
@@ -169,23 +190,6 @@
   .segment-btn.vip{ background:var(--vip); color:#1A1030; }
   .segment-btn.tours{ background:var(--tours); color:#241C0C; }
 
-  /* ---------- GTM Timeline ---------- */
-  .timeline{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
-  }
-  @media (max-width:900px){ .timeline{ grid-template-columns:1fr; } }
-  .tl-card{
-    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-m); padding:24px;
-    position:relative;
-  }
-  .tl-phase{ font-size:12.5px; color:var(--muted-2); font-weight:700; margin-bottom:8px; }
-  .tl-months{
-    display:inline-block; font-size:11.5px; padding:3px 10px; border-radius:999px;
-    background:var(--card-2); color:var(--muted); margin-bottom:14px;
-  }
-  .tl-card h4{ font-size:15.5px; margin-bottom:10px; line-height:1.4; }
-  .tl-card p{ font-size:13px; color:var(--muted); line-height:1.6; margin:0; }
-
   /* ---------- What you get strip ---------- */
   .expect-strip{
     display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:56px;
@@ -201,6 +205,54 @@
     margin:0 auto 12px;
   }
   .expect-item p{ font-size:13px; color:var(--muted); margin:0; line-height:1.5; }
+
+  /* ---------- Priority / why-join-now section ---------- */
+  .priority-wrap{
+    position:relative;
+    border-radius:28px;
+    padding:48px 36px;
+    overflow:hidden;
+    background:
+      linear-gradient(125deg, #123B38 0%, #2A2154 45%, #4A3714 100%);
+    border:1px solid var(--border);
+  }
+  .priority-wrap::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 2px, transparent 2px 26px);
+    pointer-events:none;
+  }
+  .priority-wrap::after{
+    content:"";
+    position:absolute; top:-40%; left:-10%;
+    width:70%; height:180%;
+    background:radial-gradient(circle, rgba(255,255,255,.10), transparent 65%);
+    transform:rotate(15deg);
+    pointer-events:none;
+  }
+  .priority-grid{
+    position:relative;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:18px;
+  }
+  @media (max-width:900px){ .priority-grid{ grid-template-columns:1fr; } }
+  .priority-card{
+    background:rgba(16,27,50,.72);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:24px 22px;
+  }
+  .priority-num{
+    width:30px; height:30px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Rubik'; font-weight:800; font-size:14px;
+    margin-bottom:16px;
+    background:linear-gradient(135deg, var(--civilian), var(--vip));
+    color:#0A1220;
+  }
+  .priority-card h4{ font-size:15.5px; margin-bottom:9px; }
+  .priority-card p{ font-size:13.5px; color:var(--muted); line-height:1.65; margin:0; }
 
   /* ---------- Demo request form ---------- */
   .form-wrap{
@@ -326,9 +378,9 @@
             <td>מחיר קבוע וגבוה, אין השוואה או אופטימיזציה</td>
           </tr>
           <tr class="us">
-            <td><div class="row-title">אוטוטו</div><div class="row-sub">Marketplace אחוד</div></td>
-            <td>מכרז הפוך חי בין כל הנהגים</td>
-            <td>שקיפות מלאה, תמחור תחרותי, מותאם לכל פלח</td>
+            <td><div class="row-title row-title-brand">אוטוטו <span class="brand-badge">הבחירה שלכם</span></div><div class="row-sub">Marketplace אחוד</div></td>
+            <td><strong>מכרז הפוך חי בין כל הנהגים</strong></td>
+            <td><strong>שקיפות מלאה, תמחור תחרותי, מותאם לכל פלח</strong></td>
           </tr>
         </tbody>
       </table>
@@ -382,28 +434,27 @@
 
   <section>
     <div class="section-head">
-      <div class="kicker">איך מצטרפים</div>
-      <h2>תוכנית החדירה לשוק</h2>
-      <p>הדמו הוא הצעד הראשון בתהליך מובנה של שלושה שלבים.</p>
+      <div class="kicker">למה כדאי להצטרף עכשיו</div>
+      <h2>אתם בראש התור, לא בסוף הרשימה</h2>
+      <p>הצטרפות מוקדמת נותנת לכם עדיפות אמיתית בביקוש להסעה — לא רק הבטחה.</p>
     </div>
-    <div class="timeline">
-      <div class="tl-card">
-        <div class="tl-phase">שלב א׳</div>
-        <div class="tl-months">חודשים 1–3</div>
-        <h4>גיוס היצע ובטא</h4>
-        <p>פנייה ישירה ל-20 חברות עם צי רכבי יוקרה ו-40 חברות עם אוטובוסים באזור הדרום והצפון.</p>
-      </div>
-      <div class="tl-card">
-        <div class="tl-phase">שלב ב׳</div>
-        <div class="tl-months">חודשים 4–6</div>
-        <h4>פיילוטים ממוקדים</h4>
-        <p>הרצת פיילוט מול 5 משרדי הפקות VIP, במקביל לפיילוט מול מועדוני טיולים וארגוני נוער בצפון ובדרום.</p>
-      </div>
-      <div class="tl-card">
-        <div class="tl-phase">שלב ג׳</div>
-        <div class="tl-months">חודשים 7–12</div>
-        <h4>התרחבות מלאה</h4>
-        <p>השקה לציבור הרחב, הפעלת "חזרות ריקות" מבוססת AI, והתרחבות ארצית.</p>
+    <div class="priority-wrap">
+      <div class="priority-grid">
+        <div class="priority-card">
+          <div class="priority-num">1</div>
+          <h4>עדיפות בהצעות</h4>
+          <p>כשמישהו מבקש נסיעה מהסוג והאזור שלכם, אתם בין הראשונים שרואים את הבקשה ויכולים להגיש הצעת מחיר — לפני שהיא מגיעה לכולם.</p>
+        </div>
+        <div class="priority-card">
+          <div class="priority-num">2</div>
+          <h4>ביקוש קבוע, לא חד-פעמי</h4>
+          <p>במקום לרדוף אחרי לידים בכל פעם מחדש, בקשות מגיעות אליכם באופן שוטף כל עוד אתם פעילים בפלטפורמה.</p>
+        </div>
+        <div class="priority-card">
+          <div class="priority-num">3</div>
+          <h4>מתחילים בלי סיכון</h4>
+          <p>פיילוט קצר וממוקד לפני כל התחייבות — רואים איך זה עובד אצלכם בפועל, ורק אז מחליטים אם ממשיכים.</p>
+        </div>
       </div>
     </div>
   </section>
